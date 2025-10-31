@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-Generate Cantonese (Yue) syllable and tone mapping files for IPA conversion.
-This script creates the necessary Excel files for the Cantonese dialect pipeline.
-Based on the author's Common Voice Cantonese dataset IPA format.
+Map Cantonese Jyutping to IPA format matching the Common Voice dataset.
+This script creates syllable mappings that split components as in the dataset.
 """
 
 import pandas as pd
 
-# Cantonese Jyutping initials to IPA mapping (matching author's dataset)
+# Jyutping initials to IPA (following dataset format)
 INITIALS_MAP = {
     'b': 'p',
     'p': 'pʰ',
@@ -21,97 +20,110 @@ INITIALS_MAP = {
     'k': 'kʰ',
     'ng': 'ŋ',
     'h': 'h',
-    'gw': 'kʷ',
-    'kw': 'kʰʷ',
+    'gw': 'k w',  # Split labialized consonants
+    'kw': 'kʰ w',  # Split labialized consonants
     'w': 'w',
-    'z': 't͜s',  # Using tie bar as in author's dataset
+    'z': 't͜s',
     'c': 't͜sʰ',
     's': 's',
     'j': 'j',
-    '': '∅',  # null initial
+    '': '∅',
 }
 
-# Cantonese Jyutping finals to IPA mapping (matching author's dataset format)
+# Jyutping finals to IPA components (nucleus + coda, split format)
+# Format: final -> (nucleus_ipa, coda_ipa or None)
 FINALS_MAP = {
-    'aa': 'a',       # long a
-    'aai': 'aɪ̯',
-    'aau': 'aʊ̯',
-    'aam': 'am',
-    'aan': 'an',
-    'aang': 'aŋ',
-    'aap': 'ap̚',
-    'aat': 'at̚',
-    'aak': 'ak̚',
-    'ai': 'ɐɪ̯',
-    'au': 'ɐʊ̯',
-    'am': 'ɐm',
-    'an': 'ɐn',
-    'ang': 'ɐŋ',
-    'ap': 'ɐp̚',
-    'at': 'ɐt̚',
-    'ak': 'ɐk̚',
-    'e': 'ɛ',
-    'ei': 'eɪ̯',
-    'eu': 'ɛʊ̯',
-    'em': 'ɛm',
-    'eng': 'ɛŋ',
-    'ep': 'ɛp̚',
-    'ek': 'ɛk̚',
-    'i': 'i',
-    'iu': 'iʊ̯',
-    'im': 'im',
-    'in': 'in',
-    'ing': 'ɪŋ',
-    'ip': 'ip̚',
-    'it': 'it̚',
-    'ik': 'ɪk̚',
-    'o': 'ɔ',
-    'oi': 'ɔɪ̯',
-    'ou': 'oʊ̯',
-    'on': 'ɔn',
-    'ong': 'ɔŋ',
-    'ot': 'ɔt̚',
-    'ok': 'ɔk̚',
-    'u': 'u',
-    'ui': 'uɪ̯',
-    'un': 'un',
-    'ung': 'ʊŋ',
-    'ut': 'ut̚',
-    'uk': 'ʊk̚',
-    'oe': 'œ',
-    'oeng': 'œŋ',
-    'oek': 'œk̚',
-    'eoi': 'ɵy̯',
-    'eon': 'ɵn',
-    'eot': 'ɵt̚',
-    'yu': 'y',
-    'yun': 'yn',
-    'yut': 'yt̚',
-    'm': 'm̩',
-    'ng': 'ŋ̍',
+    # Long vowels
+    'aa': ('a', None),
+    'aai': ('a', 'ɪ̯'),
+    'aau': ('a', 'ʊ̯'),
+    'aam': ('a', 'm'),
+    'aan': ('a', 'n'),
+    'aang': ('a', 'ŋ'),
+    'aap': ('a', 'p̚'),
+    'aat': ('a', 't̚'),
+    'aak': ('ă', 'k'),  # Uses a-breve for aak finals
+    
+    # Mid vowels with /ɐ/
+    'ai': ('ɐ', 'ɪ̯'),
+    'au': ('ɐ', 'ʊ̯'),
+    'am': ('ɐ', 'm'),
+    'an': ('ɐ', 'n'),
+    'ang': ('ɐ', 'ŋ'),
+    'ap': ('ɐ̆', 'p'),  # Uses ɐ-breve, no unreleased marker in output
+    'at': ('ɐ̆', 't'),
+    'ak': ('ɐ̆', 'k'),
+    
+    # Front vowels /e, ɛ/
+    'e': ('ɛ', None),
+    'ei': ('e', 'ɪ̯'),
+    'eu': ('ɛ', 'ʊ̯'),
+    'em': ('ɛ', 'm'),
+    'eng': ('ɛ', 'ŋ'),
+    'ep': ('ɛ̆', 'p'),
+    'ek': ('e', 'k'),
+    
+    # High front vowels /i/
+    'i': ('i', None),
+    'iu': ('i', 'ʊ̯'),
+    'im': ('i', 'm'),
+    'in': ('i', 'n'),
+    'ing': ('ɪ', 'ŋ'),
+    'ip': ('ɪ̆', 'p'),
+    'it': ('ɪ̆', 't'),
+    'ik': ('ɪ̆', 'k'),
+    
+    # Back vowels /o, ɔ/
+    'o': ('ɔ', None),
+    'oi': ('ɔ', 'ɪ̯'),
+    'ou': ('o', 'ʊ̯'),
+    'on': ('ɔ', 'n'),
+    'ong': ('ɔ', 'ŋ'),
+    'ot': ('ɔ̆', 't'),
+    'ok': ('ɔ̆', 'k'),
+    
+    # High back vowels /u/
+    'u': ('u', None),
+    'ui': ('u', 'ɪ̯'),
+    'un': ('u', 'n'),
+    'ung': ('ʊ', 'ŋ'),
+    'ut': ('u', 't'),
+    'uk': ('ʊ̆', 'k'),
+    
+    # Rounded front vowels /œ, ɵ/
+    'oe': ('œ', None),
+    'oeng': ('œ', 'ŋ'),
+    'oek': ('œ̆', 'k'),
+    'eoi': ('ɞ', 'ʏ̯'),
+    'eon': ('ɞ', 'n'),
+    'eot': ('ɞ̆', 't'),
+    
+    # Rounded high front vowels /y/
+    'yu': ('y', None),
+    'yun': ('y', 'n'),
+    'yut': ('y̆', 't'),
+    
+    # Syllabic consonants
+    'm': ('m̩', None),
+    'ng': ('ŋ̍', None),
 }
 
-# Cantonese tone contours (standard 6-tone system)
-# Note: These are Cantonese tone numbers (1-6), with the comments showing
-# their corresponding pitch levels (5=high, 3=mid, 2=low, 1=very low)
+# Cantonese tone numbers to IPA tone marks
 TONE_MAP = {
-    '1': 'ᴴᴴ',  # Tone 1: high level (pitch: 55)
-    '2': 'ᴹᴴ',  # Tone 2: high rising (pitch: 35)
-    '3': 'ᴹᴹ',  # Tone 3: mid level (pitch: 33)
-    '4': 'ᴸᴹ',  # Tone 4: low falling (pitch: 21)
-    '5': 'ᴸᴴ',  # Tone 5: low rising (pitch: 23)
-    '6': 'ᴸᴸ',  # Tone 6: low level (pitch: 22)
+    '1': 'ᴴᴴ',  # high level 55
+    '2': 'ᴹᴴ',  # high rising 35
+    '3': 'ᴹᴹ',  # mid level 33
+    '4': 'ᴸᴹ',  # low falling 21
+    '5': 'ᴸᴴ',  # low rising 23
+    '6': 'ᴸᴸ',  # low level 22
 }
 
-def get_jyutping_components(jyutping):
-    """
-    Parse a Jyutping syllable into initial, final, and tone.
-    Returns: (initial, final, tone)
-    """
+def parse_jyutping(jyutping):
+    """Parse Jyutping syllable into initial, final, tone."""
     if not jyutping:
         return '', '', ''
     
-    # Extract tone number (last character)
+    # Extract tone
     if jyutping[-1].isdigit():
         tone = jyutping[-1]
         syllable = jyutping[:-1]
@@ -119,10 +131,11 @@ def get_jyutping_components(jyutping):
         tone = ''
         syllable = jyutping
     
-    # Check for double-letter initials first
+    # Extract initial
     initial = ''
     final = syllable
     
+    # Check double-letter initials first
     if syllable.startswith('ng'):
         initial = 'ng'
         final = syllable[2:]
@@ -143,19 +156,52 @@ def get_jyutping_components(jyutping):
     
     return initial, final, tone
 
+def jyutping_to_ipa_split(jyutping):
+    """
+    Convert Jyutping to split IPA format matching dataset.
+    Returns list of IPA components.
+    """
+    initial_jp, final_jp, tone_num = parse_jyutping(jyutping)
+    
+    # Get IPA components
+    initial_ipa = INITIALS_MAP.get(initial_jp, '∅')
+    
+    if final_jp not in FINALS_MAP:
+        # Unknown final, return as-is
+        return [initial_ipa if initial_ipa != '∅' else '', f"[UNKNOWN:{jyutping}]"]
+    
+    nucleus, coda = FINALS_MAP[final_jp]
+    tone_mark = TONE_MAP.get(tone_num, '')
+    
+    # Build IPA components list
+    components = []
+    
+    # Add initial (may be split like "k w")
+    if initial_ipa and initial_ipa != '∅':
+        components.extend(initial_ipa.split())
+    
+    # Add nucleus with stress and tone
+    if nucleus:
+        nucleus_with_tone = f"ˈ{nucleus}{tone_mark}"
+        components.append(nucleus_with_tone)
+    
+    # Add coda if present
+    if coda:
+        components.append(coda)
+    
+    return components
+
 def generate_syllable_data():
-    """Generate syllable mapping data for Cantonese."""
+    """Generate syllable mapping data matching dataset format."""
     rows = []
     
-    # Generate all possible Jyutping combinations
+    # Generate mappings for all Jyutping combinations
     for initial_jp, initial_ipa in INITIALS_MAP.items():
-        for final_jp, final_ipa in FINALS_MAP.items():
+        for final_jp, (nucleus, coda) in FINALS_MAP.items():
             # Skip invalid combinations
             if initial_jp == '' and final_jp in ['m', 'ng']:
-                # Syllabic consonants
                 jyutping_base = final_jp
             elif final_jp in ['m', 'ng'] and initial_jp != '':
-                # m and ng can only be syllabic (no initial)
                 continue
             else:
                 jyutping_base = initial_jp + final_jp
@@ -164,33 +210,24 @@ def generate_syllable_data():
             for tone_num, tone_mark in TONE_MAP.items():
                 jyutping = jyutping_base + tone_num
                 
-                # Build IPA representation matching author's format
-                if initial_jp == '':
-                    initial_part = '∅'
-                else:
-                    initial_part = initial_ipa
-                
-                # Add stress mark and tone to final (format: ˈvowel+tone)
-                final_with_tone = f'ˈ{final_ipa}{tone_mark}'
+                # Get split components
+                components = jyutping_to_ipa_split(jyutping)
+                ipa_output = " ".join(components)
                 
                 rows.append({
                     'pinyin': jyutping,
-                    'initial': initial_part,
-                    'final': final_with_tone,
+                    'ipa': ipa_output,
                 })
     
     df = pd.DataFrame(rows)
     return df
 
 def generate_tone_data():
-    """Generate tone mark mapping (already in superscript format)."""
-    # For author's format, tones are already in the final IPA form
-    # So we create an identity mapping
+    """Generate tone mark mapping."""
     rows = []
-    tone_marks = ['ᴴᴴ', 'ᴹᴴ', 'ᴹᴹ', 'ᴸᴹ', 'ᴸᴴ', 'ᴸᴸ']
-    for mark in tone_marks:
+    for contour, mark in TONE_MAP.items():
         rows.append({
-            'contour': mark,
+            'contour': contour,
             'mark': mark,
         })
     df = pd.DataFrame(rows)
@@ -202,7 +239,7 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(script_dir, 'frontend/dialect/yue')
     
-    print("Generating Cantonese syllable data...")
+    print("Generating Cantonese syllable data (dataset format)...")
     syllable_df = generate_syllable_data()
     syllable_path = f'{output_dir}/syllable.xlsx'
     syllable_df.to_excel(syllable_path, index=False)
@@ -215,10 +252,25 @@ def main():
     print(f"✓ Created {tone_path} with {len(tone_df)} tone mappings")
     
     # Show samples
-    print("\n--- Sample syllable mappings ---")
-    print(syllable_df.head(10))
-    print("\n--- Tone mappings ---")
-    print(tone_df)
+    print("\n--- Sample syllable mappings (dataset format) ---")
+    print(syllable_df.head(15))
+    
+    # Test with actual examples
+    print("\n--- Testing with dataset examples ---")
+    test_cases = [
+        ('gwai2', 'k w ˈɐᴹᴴ ɪ̯'),
+        ('cak1', 't͜sʰ ˈăᴴ k'),
+        ('mat1', 'm ˈɐ̆ᴴ t'),
+        ('nei5', 'n ˈeᴸᴴ ɪ̯'),
+    ]
+    
+    for jyutping, expected in test_cases:
+        components = jyutping_to_ipa_split(jyutping)
+        result = " ".join(components)
+        match = "✓" if result == expected else "✗"
+        print(f"{match} {jyutping}: {result}")
+        if result != expected:
+            print(f"  Expected: {expected}")
 
 if __name__ == '__main__':
     main()
