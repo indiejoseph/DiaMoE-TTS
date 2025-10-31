@@ -234,13 +234,15 @@ class DialectTTSPipeline:
                     shutil.copy2(pinyin_file, temp_pinyin_file)
                     print(f"File copied to: {temp_pinyin_file}")
                     
-                    # For putonghua, we skip steps 1-4, so we need to create the _liandutone.txt file
-                    # that step 5 expects as input (it's just the same as the pinyin file)
+                    # For putonghua, steps 1-4 of the pipeline are skipped (erhua fix, hanzi mapping, 
+                    # word mapping, and tone sandhi). However, step 5 (pinyin2ipa.py) expects its input 
+                    # to be named *_liandutone.txt (the output from step 4). We create this file as a 
+                    # copy of the pinyin file to satisfy this naming requirement.
                     base_name = os.path.splitext(temp_pinyin_file)[0]
                     liandutone_file = base_name + "_liandutone.txt"
                     shutil.copy2(temp_pinyin_file, liandutone_file)
                     print(f"Created liandutone file for putonghua: {liandutone_file}")
-                except Exception as e:
+                except (IOError, OSError) as e:
                     print(f"File copy failed: {e}")
                     final_output = pinyin_file
                 else:
@@ -269,7 +271,7 @@ class DialectTTSPipeline:
                             try:
                                 shutil.copy2(ipa_file, final_output)
                                 print(f"Result file copied to: {final_output}")
-                            except Exception as e:
+                            except (IOError, OSError) as e:
                                 print(f"Result file copy failed: {e}")
                                 final_output = pinyin_file
                         else:
@@ -303,7 +305,7 @@ class DialectTTSPipeline:
                     try:
                         shutil.copy2(pinyin_file, temp_pinyin_file)
                         print(f"File copied to: {temp_pinyin_file}")
-                    except Exception as e:
+                    except (IOError, OSError) as e:
                         print(f"File copy failed: {e}")
                     
                     # 设置环境变量
@@ -328,7 +330,7 @@ class DialectTTSPipeline:
                             try:
                                 shutil.copy2(ipa_file, final_output)
                                 print(f"Result file copied to: {final_output}")
-                            except Exception as e:
+                            except (IOError, OSError) as e:
                                 print(f"Result file copy failed: {e}")
                                 final_output = pinyin_file
                         else:
