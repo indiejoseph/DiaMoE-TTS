@@ -14,41 +14,50 @@ This system processes Chinese text through a multi-step pipeline to generate acc
 
 - **Mandarin varieties**: `putonghua`, `shijiazhuang`, `zhengzhou`, `nanjing`, `wuhan`, `xian`, `chengdu`, `qingdao`
 - **Wu dialects**: `shanghai`
-- **Min dialects**: `gaoxiong` 
+- **Min dialects**: `gaoxiong`
+- **Yue dialects**: `yue` (Cantonese)
 - **Peking Opera Pronunciations**: `jingjujingbai`, `jingjuyunbai`
 
 ## Processing Pipeline
 
-The system processes input text through 6 sequential steps:
+The system processes input text through sequential steps. **Note**: Cantonese (yue) uses a simplified pipeline.
 
-### Step 0: Get Frontend in Mandarin Pinyin
-- Obtain the corresponding Mandarin pinyin of the text frontend
-- **Script**: `gen_ppinyin_oop.py`
-- **🛠️using our g2pw** : [![HF](https://img.shields.io/badge/🤗%20HF-g2pw-yellow)](https://huggingface.co/RICHARD12369/DiaMoE_TTS/blob/main/g2pw.tar.gz)
+### Standard Pipeline (Steps 0-6)
+
+### Step 0: Get Frontend in Mandarin Pinyin (or Cantonese Jyutping)
+- **For most dialects**: Obtain the corresponding Mandarin pinyin of the text frontend
+  - **Script**: `gen_ppinyin_oop.py`
+  - **🛠️using our g2pw** : [![HF](https://img.shields.io/badge/🤗%20HF-g2pw-yellow)](https://huggingface.co/RICHARD12369/DiaMoE_TTS/blob/main/g2pw.tar.gz)
+- **For Cantonese (yue)**: Convert Chinese text to Jyutping using ToJyutping library
+  - **Script**: `gen_yue_jyutping.py`
+  - **Library**: ToJyutping
 
 ### Step 1: Fix Erhua in Mandarin Frontend
 - Handles retroflex suffix (儿化音) correction in Mandarin pinyin
-- Skipped for Putonghua dialect
+- **Skipped for**: Putonghua, Cantonese (yue)
 - **Script**: `fix_erhua.py`
 
 ### Step 2: Map Chinese Characters to Dialect Pinyin
 - Converts Chinese characters to dialect-specific pinyin representations
 - Uses character-level mapping tables for each dialect
+- **Skipped for**: Putonghua, Cantonese (yue)
 - **Script**: `hanzi2dialect_pinyin.py`
 
 ### Step 3: Supplement Word Mapping to Dialect Pinyin
 - Applies word-level pinyin replacements for better accuracy
 - Handles multi-character words and phrases
+- **Skipped for**: Cantonese (yue)
 - **Script**: `word2dialect_pinyin.py`
 
 ### Step 4: Tone Sandhi
 - Applies dialect-specific tone change rules
 - **Important**: For certain dialects (Shanghai, Min varieties), tone sandhi boundary prediction is crucial for accurate results
 - Supports both sequence-based and character-specific tone rules
+- **Skipped for**: Cantonese (yue)
 - **Script**: `liandu_tone.py`
 
 ### Step 5: Pinyin to IPA
-- Converts dialect pinyin to International Phonetic Alphabet (IPA)
+- Converts dialect pinyin (or Jyutping for Cantonese) to International Phonetic Alphabet (IPA)
 - Uses dialect-specific syllable mapping tables
 - **Script**: `pinyin2ipa.py`
 
@@ -56,6 +65,13 @@ The system processes input text through 6 sequential steps:
 - Maps tone contours to appropriate IPA tone symbols
 - Final step in the phonological processing pipeline
 - **Script**: `ipa_tone.py`
+
+### Cantonese (yue) Simplified Pipeline
+
+For Cantonese, use steps **0, 5, 6** (or simply run with `all` option):
+1. **Step 0**: Chinese → Jyutping (using ToJyutping)
+2. **Step 5**: Jyutping → IPA
+3. **Step 6**: IPA tone formatting
 
 ## Usage
 
@@ -71,6 +87,9 @@ bash single_frontend.sh 1-6 <dialect_name> <input_file.txt>
 ```bash
 # Process Shanghai dialect
 bash single_frontend.sh 1-6 shanghai input_text.txt
+
+# Process Cantonese (simplified pipeline)
+bash single_frontend.sh all yue input_text.txt
 
 # Process specific steps only
 bash single_frontend.sh 2-4 chengdu input_text.txt
