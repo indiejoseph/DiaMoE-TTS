@@ -92,13 +92,15 @@ FINALS_MAP = {
 }
 
 # Cantonese tone contours (standard 6-tone system)
+# Note: These are Cantonese tone numbers (1-6), with the comments showing
+# their corresponding pitch levels (5=high, 3=mid, 2=low, 1=very low)
 TONE_MAP = {
-    '1': 'ᴴᴴ',  # high level 55
-    '2': 'ᴹᴴ',  # high rising 35
-    '3': 'ᴹᴹ',  # mid level 33
-    '4': 'ᴸᴹ',  # low falling 21
-    '5': 'ᴸᴴ',  # low rising 23
-    '6': 'ᴸᴸ',  # low level 22
+    '1': 'ᴴᴴ',  # Tone 1: high level (pitch: 55)
+    '2': 'ᴹᴴ',  # Tone 2: high rising (pitch: 35)
+    '3': 'ᴹᴹ',  # Tone 3: mid level (pitch: 33)
+    '4': 'ᴸᴹ',  # Tone 4: low falling (pitch: 21)
+    '5': 'ᴸᴴ',  # Tone 5: low rising (pitch: 23)
+    '6': 'ᴸᴸ',  # Tone 6: low level (pitch: 22)
 }
 
 def get_jyutping_components(jyutping):

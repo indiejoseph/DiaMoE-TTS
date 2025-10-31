@@ -80,7 +80,6 @@ def get_yue_jyutping(infile, outfile):
             
             # Convert to Jyutping
             jyutping = text_to_jyutping(text_normalized)
-            jyutping = replace_english_punctuation_with_chinese(jyutping)
             
             # Write output
             fw.write(f"{idx}\t{text_normalized}\t{jyutping}\n")
