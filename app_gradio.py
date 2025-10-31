@@ -183,7 +183,7 @@ class DialectTTSPipeline:
             print(f"Pinyin conversion error: {e}")
             return text, text, []
     
-    def run_shell_command(self, command: str, cwd: str = None) -> tuple:
+    def run_shell_command(self, command: str, cwd: str = None, env: dict = None) -> tuple:
         """运行shell命令"""
         try:
             result = subprocess.run(
@@ -192,6 +192,7 @@ class DialectTTSPipeline:
                 capture_output=True, 
                 text=True, 
                 cwd=cwd,
+                env=env,
                 encoding='utf-8'
             )
             return result.returncode, result.stdout, result.stderr
@@ -253,19 +254,7 @@ class DialectTTSPipeline:
                     env['LANG'] = 'C.UTF-8'
                     env['LC_ALL'] = 'C.UTF-8'
                     
-                    try:
-                        result = subprocess.run(
-                            frontend_command,
-                            shell=True,
-                            capture_output=True,
-                            text=True,
-                            cwd=dialect_dir,
-                            env=env,
-                            encoding='utf-8'
-                        )
-                        ret_code, stdout, stderr = result.returncode, result.stdout, result.stderr
-                    except Exception as e:
-                        ret_code, stdout, stderr = 1, "", str(e)
+                    ret_code, stdout, stderr = self.run_shell_command(frontend_command, cwd=dialect_dir, env=env)
                     
                     if ret_code != 0:
                         print(f"Frontend processing failed: {stderr}")
@@ -273,7 +262,6 @@ class DialectTTSPipeline:
                         final_output = pinyin_file
                     else:
                         # 查找最终的IPA格式文件
-                        base_name = os.path.splitext(temp_pinyin_file)[0]
                         ipa_file = base_name + "_ipa_format.txt"
                         if os.path.exists(ipa_file):
                             # 将结果文件复制回临时目录
@@ -323,19 +311,7 @@ class DialectTTSPipeline:
                     env['LANG'] = 'C.UTF-8'
                     env['LC_ALL'] = 'C.UTF-8'
                     
-                    try:
-                        result = subprocess.run(
-                            frontend_command,
-                            shell=True,
-                            capture_output=True,
-                            text=True,
-                            cwd=dialect_dir,  # 在dialect_frontend目录下执行
-                            env=env,
-                            encoding='utf-8'
-                        )
-                        ret_code, stdout, stderr = result.returncode, result.stdout, result.stderr
-                    except Exception as e:
-                        ret_code, stdout, stderr = 1, "", str(e)
+                    ret_code, stdout, stderr = self.run_shell_command(frontend_command, cwd=dialect_dir, env=env)
                 
                     if ret_code != 0:
                         print(f"Frontend processing failed: {stderr}")
