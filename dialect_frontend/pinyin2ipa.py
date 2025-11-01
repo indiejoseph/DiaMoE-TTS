@@ -47,11 +47,22 @@ def replace_english_punctuation(text):
 
 
 def format_ipa_output(ipa_units):
-    # Join ipa list into string, then perform global replacements: space to |, comma to space
-    ipa_string = " ".join(ipa_units)
-    ipa_string = ipa_string.replace(" ", " | ")
-    ipa_string = ipa_string.replace(",", " ")
-    return ipa_string
+    # Each ipa unit is "initial,final" where initial and final may have internal spaces
+    # We need to:
+    # 1. Replace comma with space (to combine initial and final)
+    # 2. Add " | " between syllables (between ipa_units)
+    
+    formatted_syllables = []
+    for unit in ipa_units:
+        # Replace comma with space to join initial and final
+        syllable = unit.replace(",", " ").strip()
+        # Clean up any double spaces
+        while "  " in syllable:
+            syllable = syllable.replace("  ", " ")
+        formatted_syllables.append(syllable)
+    
+    # Join syllables with " | "
+    return " | ".join(formatted_syllables)
 
 
 def process_file_to_ipa(input_path, output_path, excel_path):

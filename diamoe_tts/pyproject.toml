@@ -51,6 +51,7 @@ dependencies = [
     "onnxruntime",
     "nltk",
     "pandas",
+    "ToJyutping",
 ]
 
 [project.urls]

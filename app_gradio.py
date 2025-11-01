@@ -63,7 +63,7 @@ class DialectTTSPipeline:
     
     def __init__(self, auto_load_model=True):
         self.dialect_list = [
-            "putonghua", "chengdu", "gaoxiong", "shanghai",
+            "putonghua", "chengdu", "cantonese", "gaoxiong", "shanghai",
             "shijiazhuang", "wuhan", "xian", "zhengzhou"
         ]
         # 初始化前端处理器
@@ -412,13 +412,15 @@ class DialectTTSPipeline:
             
             # 步骤3: IPA格式转换
             # 对生成文本进行格式转换
+            # 注意：所有方言都需要convert_to_ipa_format来添加括号格式
+            # process_frontend_pipeline已经输出IPA格式，convert_to_ipa_format负责添加[token]格式
             processed_text_ipa = self.convert_to_ipa_format(processed_text)
             
             # 对参考文本也进行前端处理和格式转换
             if ref_text_processed and ref_text_processed.strip():
                 # 首先对参考文本进行前端处理
                 ref_processed = self.process_frontend_pipeline(ref_text_processed, dialect)
-                # 然后进行IPA格式转换
+                # 然后进行IPA格式转换（添加括号）
                 ref_text_processed_ipa = self.convert_to_ipa_format(ref_processed)
             else:
                 ref_text_processed_ipa = ref_text_processed
@@ -465,6 +467,8 @@ class DialectTTSPipeline:
             print(f"Frontend processing result: {processed_text}")
             
             # IPA格式转换
+            # 注意：所有方言都需要convert_to_ipa_format来添加括号格式
+            # process_frontend_pipeline已经输出IPA格式，convert_to_ipa_format负责添加[token]格式
             processed_text_ipa = self.convert_to_ipa_format(processed_text)
             print(f"IPA format result: {processed_text_ipa}")
             
@@ -498,6 +502,10 @@ SAMPLE_REFERENCE_AUDIOS = {
     "chengdu": {
         "male": "prompts/chengdu_male_prompt.wav",
         "female": "prompts/chengdu_female_prompt.wav"
+    },
+    "cantonese": {
+        "male": "prompts/cantonese_male_prompt.wav",
+        "female": "prompts/cantonese_female_prompt.wav"
     },
     "gaoxiong": {
         "male": "prompts/hokkien_male_prompt.wav",
@@ -814,6 +822,7 @@ def create_gradio_interface():
                 value=[
                     ["putonghua", "Mandarin Chinese"],
                     ["chengdu", "Chengdu Dialect"],
+                    ["cantonese", "Cantonese"],
                     ["gaoxiong", "Kaohsiung Dialect"], 
                     ["shanghai", "Shanghai Dialect"],
                     ["shijiazhuang", "Shijiazhuang Dialect"],
