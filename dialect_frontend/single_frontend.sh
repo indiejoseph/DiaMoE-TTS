@@ -25,7 +25,7 @@ fi
 
 # Parse step list
 if [ "${step_args[0]}" == "all" ]; then
-  if [ "$dialect" == "yue" ]; then
+  if [ "$dialect" == "cantonese" ]; then
     steps=(0 5 6)  # Cantonese uses simplified pipeline
   else
     steps=(1 2 3 4 5 6)
@@ -45,7 +45,7 @@ for step in "${steps[@]}"; do
   if [ "$step" -eq 0 ]; then
     # Step 0: Generate Jyutping for Cantonese (yue only)
     echo "===== Convert Chinese to Cantonese Jyutping ====="
-    if [ "$dialect" != "yue" ]; then
+    if [ "$dialect" != "cantonese" ]; then
       echo "Skip this step: Step 0 is only for Cantonese (yue)"
       continue
     fi
@@ -55,7 +55,7 @@ for step in "${steps[@]}"; do
   elif [ "$step" -eq 1 ]; then
     # Step 1 script and parameters
     echo "===== Fix erhua in Mandarin frontend ====="
-    if [ "$dialect" == "putonghua" ] || [ "$dialect" == "yue" ]; then
+    if [ "$dialect" == "putonghua" ] || [ "$dialect" == "cantonese" ]; then
       echo "Skip this step: ${dialect} does not need this step"
       continue
     fi
@@ -65,7 +65,7 @@ for step in "${steps[@]}"; do
   elif [ "$step" -eq 2 ]; then
     # Step 2 script and parameters
     echo "===== Map Chinese characters to dialect pinyin ====="
-    if [ "$dialect" == "putonghua" ] || [ "$dialect" == "yue" ]; then
+    if [ "$dialect" == "putonghua" ] || [ "$dialect" == "cantonese" ]; then
       echo "Skip this step: ${dialect} does not need this step"
       continue
     fi
@@ -76,7 +76,7 @@ for step in "${steps[@]}"; do
   elif [ "$step" -eq 3 ]; then
     # Step 3 script and parameters
     echo "===== Supplement word mapping to dialect pinyin ====="
-    if [ "$dialect" == "yue" ]; then
+    if [ "$dialect" == "cantonese" ]; then
       echo "Skip this step: ${dialect} does not need this step"
       continue
     fi
@@ -87,7 +87,7 @@ for step in "${steps[@]}"; do
   elif [ "$step" -eq 4 ]; then
     # Step 4 script and parameters
     echo "===== Tone sandhi ====="
-    if [ "$dialect" == "yue" ]; then
+    if [ "$dialect" == "cantonese" ]; then
       echo "Skip this step: ${dialect} does not need this step"
       continue
     fi
@@ -98,7 +98,7 @@ for step in "${steps[@]}"; do
   elif [ "$step" -eq 5 ]; then
     # Step 5 script and parameters
     echo "===== Pinyin to IPA ====="
-    if [ "$dialect" == "yue" ]; then
+    if [ "$dialect" == "cantonese" ]; then
       # For Cantonese, use jyutping output from step 0
       python pinyin2ipa.py --input ${path_no_ext}_jyutping.txt \
                            --output ${path_no_ext}_ipa1.txt \
