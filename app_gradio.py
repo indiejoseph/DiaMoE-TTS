@@ -412,14 +412,23 @@ class DialectTTSPipeline:
             
             # 步骤3: IPA格式转换
             # 对生成文本进行格式转换
-            processed_text_ipa = self.convert_to_ipa_format(processed_text)
+            # 注意：cantonese和其他方言已经输出IPA格式，不需要再次转换
+            # 只有putonghua输出拼音格式，需要转换为IPA
+            if dialect == "putonghua":
+                processed_text_ipa = self.convert_to_ipa_format(processed_text)
+            else:
+                # cantonese等方言已经是IPA格式，直接使用
+                processed_text_ipa = processed_text
             
             # 对参考文本也进行前端处理和格式转换
             if ref_text_processed and ref_text_processed.strip():
                 # 首先对参考文本进行前端处理
                 ref_processed = self.process_frontend_pipeline(ref_text_processed, dialect)
-                # 然后进行IPA格式转换
-                ref_text_processed_ipa = self.convert_to_ipa_format(ref_processed)
+                # 然后根据方言决定是否进行IPA格式转换
+                if dialect == "putonghua":
+                    ref_text_processed_ipa = self.convert_to_ipa_format(ref_processed)
+                else:
+                    ref_text_processed_ipa = ref_processed
             else:
                 ref_text_processed_ipa = ref_text_processed
             
@@ -465,7 +474,13 @@ class DialectTTSPipeline:
             print(f"Frontend processing result: {processed_text}")
             
             # IPA格式转换
-            processed_text_ipa = self.convert_to_ipa_format(processed_text)
+            # 注意：cantonese和其他方言已经输出IPA格式，不需要再次转换
+            # 只有putonghua输出拼音格式，需要转换为IPA
+            if dialect == "putonghua":
+                processed_text_ipa = self.convert_to_ipa_format(processed_text)
+            else:
+                # cantonese等方言已经是IPA格式，直接使用
+                processed_text_ipa = processed_text
             print(f"IPA format result: {processed_text_ipa}")
             
             return processed_text, processed_text_ipa, "Frontend processing successful!"
