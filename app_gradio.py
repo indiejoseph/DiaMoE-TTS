@@ -63,7 +63,7 @@ class DialectTTSPipeline:
     
     def __init__(self, auto_load_model=True):
         self.dialect_list = [
-            "putonghua", "chengdu", "gaoxiong", "shanghai",
+            "putonghua", "chengdu", "cantonese", "gaoxiong", "shanghai",
             "shijiazhuang", "wuhan", "xian", "zhengzhou"
         ]
         # 初始化前端处理器
@@ -183,7 +183,7 @@ class DialectTTSPipeline:
             print(f"Pinyin conversion error: {e}")
             return text, text, []
     
-    def run_shell_command(self, command: str, cwd: str = None, env: dict = None) -> tuple:
+    def run_shell_command(self, command: str, cwd: str = None) -> tuple:
         """运行shell命令"""
         try:
             result = subprocess.run(
@@ -192,7 +192,6 @@ class DialectTTSPipeline:
                 capture_output=True, 
                 text=True, 
                 cwd=cwd,
-                env=env,
                 encoding='utf-8'
             )
             return result.returncode, result.stdout, result.stderr
@@ -224,59 +223,8 @@ class DialectTTSPipeline:
              
             # 步骤3: 运行方言前端处理脚本
             if dialect == "putonghua":
-                # 普通话需要运行steps 5-6 (pinyin2ipa和ipa_tone)来转换pinyin到IPA格式
-                current_dir = os.getcwd()
-                dialect_dir = os.path.join(current_dir, "dialect_frontend")
-                
-                # 复制文件到dialect_frontend目录
-                temp_pinyin_file = os.path.join(dialect_dir, os.path.basename(pinyin_file))
-                try:
-                    shutil.copy2(pinyin_file, temp_pinyin_file)
-                    print(f"File copied to: {temp_pinyin_file}")
-                    
-                    # For putonghua, steps 1-4 of the pipeline are skipped (erhua fix, hanzi mapping, 
-                    # word mapping, and tone sandhi). However, step 5 (pinyin2ipa.py) expects its input 
-                    # to be named *_liandutone.txt (the output from step 4). We create this file as a 
-                    # copy of the pinyin file to satisfy this naming requirement.
-                    base_name = os.path.splitext(temp_pinyin_file)[0]
-                    liandutone_file = base_name + "_liandutone.txt"
-                    shutil.copy2(temp_pinyin_file, liandutone_file)
-                    print(f"Created liandutone file for putonghua: {liandutone_file}")
-                except (IOError, OSError) as e:
-                    print(f"File copy failed: {e}")
-                    final_output = pinyin_file
-                else:
-                    # 只运行步骤5和6 (pinyin2ipa和ipa_tone)
-                    frontend_command = f'bash single_frontend.sh 5 6 {dialect} "{os.path.basename(pinyin_file)}"'
-                    print(f"Executing putonghua frontend processing: {frontend_command}")
-                    print(f"Working directory: {dialect_dir}")
-                    
-                    # 设置环境变量
-                    env = os.environ.copy()
-                    env['LANG'] = 'C.UTF-8'
-                    env['LC_ALL'] = 'C.UTF-8'
-                    
-                    ret_code, stdout, stderr = self.run_shell_command(frontend_command, cwd=dialect_dir, env=env)
-                    
-                    if ret_code != 0:
-                        print(f"Frontend processing failed: {stderr}")
-                        print(f"Standard output: {stdout}")
-                        final_output = pinyin_file
-                    else:
-                        # 查找最终的IPA格式文件
-                        ipa_file = base_name + "_ipa_format.txt"
-                        if os.path.exists(ipa_file):
-                            # 将结果文件复制回临时目录
-                            final_output = os.path.join(temp_dir, "final_ipa_format.txt")
-                            try:
-                                shutil.copy2(ipa_file, final_output)
-                                print(f"Result file copied to: {final_output}")
-                            except (IOError, OSError) as e:
-                                print(f"Result file copy failed: {e}")
-                                final_output = pinyin_file
-                        else:
-                            print("IPA format file not found, using pinyin file")
-                            final_output = pinyin_file
+                # 普通话直接使用拼音结果
+                final_output = pinyin_file
             else:
                 # 运行single_frontend.sh脚本，使用绝对路径
                 current_dir = os.getcwd()
@@ -305,7 +253,7 @@ class DialectTTSPipeline:
                     try:
                         shutil.copy2(pinyin_file, temp_pinyin_file)
                         print(f"File copied to: {temp_pinyin_file}")
-                    except (IOError, OSError) as e:
+                    except Exception as e:
                         print(f"File copy failed: {e}")
                     
                     # 设置环境变量
@@ -313,7 +261,19 @@ class DialectTTSPipeline:
                     env['LANG'] = 'C.UTF-8'
                     env['LC_ALL'] = 'C.UTF-8'
                     
-                    ret_code, stdout, stderr = self.run_shell_command(frontend_command, cwd=dialect_dir, env=env)
+                    try:
+                        result = subprocess.run(
+                            frontend_command,
+                            shell=True,
+                            capture_output=True,
+                            text=True,
+                            cwd=dialect_dir,  # 在dialect_frontend目录下执行
+                            env=env,
+                            encoding='utf-8'
+                        )
+                        ret_code, stdout, stderr = result.returncode, result.stdout, result.stderr
+                    except Exception as e:
+                        ret_code, stdout, stderr = 1, "", str(e)
                 
                     if ret_code != 0:
                         print(f"Frontend processing failed: {stderr}")
@@ -330,7 +290,7 @@ class DialectTTSPipeline:
                             try:
                                 shutil.copy2(ipa_file, final_output)
                                 print(f"Result file copied to: {final_output}")
-                            except (IOError, OSError) as e:
+                            except Exception as e:
                                 print(f"Result file copy failed: {e}")
                                 final_output = pinyin_file
                         else:
@@ -538,6 +498,10 @@ SAMPLE_REFERENCE_AUDIOS = {
     "chengdu": {
         "male": "prompts/chengdu_male_prompt.wav",
         "female": "prompts/chengdu_female_prompt.wav"
+    },
+    "cantonese": {
+        "male": "prompts/cantonese_male_prompt.wav",
+        "female": "prompts/cantonese_female_prompt.wav"
     },
     "gaoxiong": {
         "male": "prompts/hokkien_male_prompt.wav",
@@ -854,6 +818,7 @@ def create_gradio_interface():
                 value=[
                     ["putonghua", "Mandarin Chinese"],
                     ["chengdu", "Chengdu Dialect"],
+                    ["cantonese", "Cantonese"],
                     ["gaoxiong", "Kaohsiung Dialect"], 
                     ["shanghai", "Shanghai Dialect"],
                     ["shijiazhuang", "Shijiazhuang Dialect"],
