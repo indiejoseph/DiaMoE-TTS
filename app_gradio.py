@@ -63,7 +63,7 @@ class DialectTTSPipeline:
     
     def __init__(self, auto_load_model=True):
         self.dialect_list = [
-            "putonghua", "chengdu", "gaoxiong", "shanghai",
+            "putonghua", "chengdu", "cantonese", "gaoxiong", "shanghai",
             "shijiazhuang", "wuhan", "xian", "zhengzhou"
         ]
         # 初始化前端处理器
@@ -499,6 +499,10 @@ SAMPLE_REFERENCE_AUDIOS = {
         "male": "prompts/chengdu_male_prompt.wav",
         "female": "prompts/chengdu_female_prompt.wav"
     },
+    "cantonese": {
+        "male": "prompts/cantonese_male_prompt.wav",
+        "female": "prompts/cantonese_female_prompt.wav"
+    },
     "gaoxiong": {
         "male": "prompts/hokkien_male_prompt.wav",
         "female": "prompts/hokkien_female_prompt.wav"
@@ -814,6 +818,7 @@ def create_gradio_interface():
                 value=[
                     ["putonghua", "Mandarin Chinese"],
                     ["chengdu", "Chengdu Dialect"],
+                    ["cantonese", "Cantonese"],
                     ["gaoxiong", "Kaohsiung Dialect"], 
                     ["shanghai", "Shanghai Dialect"],
                     ["shijiazhuang", "Shijiazhuang Dialect"],
