@@ -212,11 +212,42 @@ def generate_syllable_data():
                 
                 # Get split components
                 components = jyutping_to_ipa_split(jyutping)
-                ipa_output = " ".join(components)
+                
+                # Separate into initial and final for pinyin2ipa.py compatibility
+                # Format: initial,final (comma-separated)
+                if len(components) == 0:
+                    initial_part = ""
+                    final_part = ""
+                elif len(components) == 1:
+                    # Just a vowel with tone or syllabic consonant
+                    initial_part = ""
+                    final_part = components[0]
+                else:
+                    # Has initial consonant(s) and final
+                    # Components can be: [initial(s), vowel+tone, coda?]
+                    # or for labialized: [k, w, vowel+tone, coda?]
+                    
+                    # Find where the stressed vowel starts (marked with ˈ)
+                    stress_idx = -1
+                    for i, comp in enumerate(components):
+                        if 'ˈ' in comp:
+                            stress_idx = i
+                            break
+                    
+                    if stress_idx > 0:
+                        # Everything before stress mark is initial
+                        initial_part = " ".join(components[:stress_idx])
+                        # Everything from stress mark onward is final
+                        final_part = " ".join(components[stress_idx:])
+                    else:
+                        # No stress mark found (shouldn't happen), treat first as initial
+                        initial_part = components[0] if len(components) > 1 else ""
+                        final_part = " ".join(components[1:]) if len(components) > 1 else components[0]
                 
                 rows.append({
                     'pinyin': jyutping,
-                    'ipa': ipa_output,
+                    'initial': initial_part,
+                    'final': final_part,
                 })
     
     df = pd.DataFrame(rows)
@@ -237,7 +268,11 @@ def main():
     """Main function to generate Cantonese data files."""
     import os
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir, 'frontend/dialect/yue')
+    # Output to cantonese directory (not yue)
+    output_dir = os.path.join(script_dir, 'frontend/dialect/cantonese')
+    
+    # Create directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
     
     print("Generating Cantonese syllable data (dataset format)...")
     syllable_df = generate_syllable_data()
@@ -252,25 +287,30 @@ def main():
     print(f"✓ Created {tone_path} with {len(tone_df)} tone mappings")
     
     # Show samples
-    print("\n--- Sample syllable mappings (dataset format) ---")
+    print("\n--- Sample syllable mappings (pinyin2ipa format) ---")
     print(syllable_df.head(15))
     
     # Test with actual examples
     print("\n--- Testing with dataset examples ---")
     test_cases = [
-        ('gwai2', 'k w ˈɐᴹᴴ ɪ̯'),
-        ('cak1', 't͜sʰ ˈăᴴ k'),
-        ('mat1', 'm ˈɐ̆ᴴ t'),
-        ('nei5', 'n ˈeᴸᴴ ɪ̯'),
+        ('gwai2', 'k w', 'ˈɐᴹᴴ ɪ̯'),
+        ('nei5', 'n', 'ˈeᴸᴴ ɪ̯'),
+        ('hou2', 'h', 'ˈoʊ̯ᴹᴴ'),
+        ('mat1', 'm', 'ˈɐ̆ᴴᴴ t'),
     ]
     
-    for jyutping, expected in test_cases:
-        components = jyutping_to_ipa_split(jyutping)
-        result = " ".join(components)
-        match = "✓" if result == expected else "✗"
-        print(f"{match} {jyutping}: {result}")
-        if result != expected:
-            print(f"  Expected: {expected}")
+    for jyutping, exp_init, exp_final in test_cases:
+        row = syllable_df[syllable_df['pinyin'] == jyutping]
+        if len(row) > 0:
+            actual_init = row.iloc[0]['initial']
+            actual_final = row.iloc[0]['final']
+            init_match = "✓" if actual_init == exp_init else "✗"
+            final_match = "✓" if actual_final == exp_final else "✗"
+            print(f"{init_match}{final_match} {jyutping}: [{actual_init}] , [{actual_final}]")
+            if actual_init != exp_init or actual_final != exp_final:
+                print(f"    Expected: [{exp_init}] , [{exp_final}]")
+        else:
+            print(f"✗ {jyutping}: NOT FOUND")
 
 if __name__ == '__main__':
     main()
